@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid IDS — Security Intelligence Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #060c1a;
+            --surface: #0d1628;
+            --surface2: #111e35;
+            --surface3: #162440;
+            --border: rgba(255,255,255,0.06);
+            --border-bright: rgba(255,255,255,0.12);
+            --text: #e8edf5;
+            --muted: #6b7fa3;
+            --blue: #4f8ef7;
+            --blue-dim: rgba(79,142,247,0.12);
+            --blue-glow: rgba(79,142,247,0.25);
+            --green: #34d399;
+            --green-dim: rgba(52,211,153,0.1);
+            --violet: #a78bfa;
+            --violet-dim: rgba(167,139,250,0.1);
+            --red: #f87171;
+            --red-dim: rgba(248,113,113,0.1);
+            --amber: #fbbf24;
+        }
+
+        html { font-size: 16px; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ── SNAP CONTAINER ── */
+        .snap-wrap {
+            height: 100vh;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+        }
+        .snap-wrap::-webkit-scrollbar { display: none; }
+
+        .slide {
+            min-height: 100vh;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 2rem 1.5rem;
+            overflow: hidden;
+        }
+
+        /* ── NAV DOTS ── */
+        .nav {
+            position: fixed;
+            right: 1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .nav-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 0;
+        }
+        .nav-dot.active {
+            background: var(--blue);
+            transform: scale(1.5);
+        }
+
+        /* ── AMBIENT BG SHAPES ── */
+        .ambient {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── TYPOGRAPHY ── */
+        .overline {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+        }
+        h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; line-height: 1.1; }
+        h2 { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 600; line-height: 1.2; }
+        h3 { font-size: 1.05rem; font-weight: 600; }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .card:hover { border-color: var(--border-bright); }
+
+        .card-accent-green { border-top: 2px solid var(--green); }
+        .card-accent-violet { border-top: 2px solid var(--violet); }
+        .card-accent-blue { border-top: 2px solid var(--blue); }
+        .card-accent-red { border-top: 2px solid var(--red); }
+
+        /* ── TAGS / BADGES ── */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .tag-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+        .tag-violet { background: var(--violet-dim); color: var(--violet); border: 1px solid rgba(167,139,250,0.2); }
+        .tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(79,142,247,0.2); }
+        .tag-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+        .tag-amber { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+
+        /* ── CODE BLOCK ── */
+        .code-window {
+            background: #02060f;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+        }
+        .code-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .code-body {
+            padding: 1.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            line-height: 1.8;
+            color: #8b9cc8;
+            overflow-x: auto;
+        }
+
+        /* ── MATH BOX ── */
+        .math-box {
+            background: var(--surface2);
+            border: 1px solid var(--border-bright);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.4rem;
+            text-align: center;
+            color: var(--text);
+        }
+
+        /* ── SLIDE 1: HERO ── */
+        #slide-1 { background: var(--bg); }
+        #slide-1 .ambient-1 {
+            width: 600px; height: 600px;
+            background: rgba(79,142,247,0.06);
+            top: -200px; left: -200px;
+        }
+        #slide-1 .ambient-2 {
+            width: 500px; height: 500px;
+            background: rgba(167,139,250,0.05);
+            bottom: -150px; right: -150px;
+        }
+
+        .hero-icon {
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg, rgba(79,142,247,0.15), rgba(167,139,250,0.1));
+            border: 1px solid rgba(79,142,247,0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            font-size: 1.8rem;
+            color: var(--blue);
+            box-shadow: 0 0 40px rgba(79,142,247,0.1);
+        }
+
+        .pill-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #3b7cf7, #6d5cf7);
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 8px 24px rgba(79,142,247,0.25);
+            text-decoration: none;
+        }
+        .cta-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(79,142,247,0.35); }
+
+        /* ── SLIDE 2: PROBLEM ── */
+        .compare-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+        }
+        @media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }
+
+        .pro-con-list { list-style: none; margin-top: 1rem; }
+        .pro-con-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--muted);
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .pro-con-list li:last-child { border-bottom: none; }
+        .pro-con-list .icon-plus { color: var(--green); }
+        .pro-con-list .icon-minus { color: var(--red); }
+
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .vs-divider::before, .vs-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .vs-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            padding: 4px 12px;
+            border: 1px solid var(--border);
+            border-radius: 99px;
+        }
+
+        /* ── SLIDE 3: LOGIC ENGINE ── */
+        .slide-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            width: 100%;
+            max-width: 1000px;
+            align-items: center;
+        }
+        @media (max-width: 700px) { .slide-cols { grid-template-columns: 1fr; } }
+
+        .feature-list { list-style: none; margin-top: 1.5rem; }
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .feature-list li:last-child { border-bottom: none; }
+        .feature-list .bullet {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── SLIDE 4: ADALINE ── */
+        .adaline-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .formula-display {
+            background: var(--surface2);
+            border: 1px solid rgba(167,139,250,0.2);
+            border-radius: 12px;
+            padding: 1.25rem 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            box-shadow: inset 0 0 40px rgba(167,139,250,0.04);
+        }
+
+        .param-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .param-row:last-child { border-bottom: none; }
+
+        /* ── SLIDE 5: DELTA RULE ── */
+        .delta-grid {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 1rem;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 2rem;
+        }
+        @media (max-width: 600px) { .delta-grid { grid-template-columns: 1fr; } }
+
+        .delta-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+        .delta-card:hover { border-color: var(--border-bright); }
+        .delta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .delta-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+        /* ── SLIDE 6: SIMULATOR ── */
+        #slide-6 { padding: 0; }
+
+        .dashboard {
+            width: 100%;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .dash-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .dash-logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #3b7cf7, #6d5cf7);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        .dash-stats {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .dash-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--muted);
+        }
+        .dash-stat-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+        .dash-stat-val { font-weight: 700; color: var(--text); }
+
+        .dash-body {
+            display: grid;
+            grid-template-columns: 240px 1fr 300px;
+            overflow: hidden;
+        }
+
+        /* Left panel */
+        .left-panel {
+            border-right: 1px solid var(--border);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .panel-section {
+            padding: 1rem 1rem 0.5rem;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .attack-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            color: var(--text);
+        }
+        .attack-btn:hover { background: rgba(255,255,255,0.03); }
+        .attack-btn:last-child { border-bottom: none; }
+        .attack-btn-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .attack-btn-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.4; }
+
+        /* Center panel */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 2rem;
+            background: var(--bg);
+            position: relative;
+            overflow: hidden;
+        }
+        .center-title {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 2rem;
+        }
+
+        /* Topology */
+        .topology {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0;
+        }
+
+        .topo-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .node-box {
+            width: 100px;
+            padding: 16px 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        .node-box i { font-size: 1.4rem; color: var(--muted); transition: color 0.4s ease; }
+        .node-label { font-size: 0.7rem; font-weight: 600; color: var(--text); }
+        .node-sublabel { font-size: 0.6rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+
+        .node-badge {
+            position: absolute;
+            top: -10px; right: -10px;
+            font-size: 0.55rem;
+            font-weight: 800;
+            padding: 2px 6px;
+            border-radius: 6px;
+            display: none;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* States */
+        .state-pass .node-box { border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.05); }
+        .state-pass .node-box i { color: var(--green); }
+        .state-block .node-box { border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.05); }
+        .state-block .node-box i { color: var(--red); }
+        .state-ai .node-box { border-color: rgba(167,139,250,0.4); background: rgba(167,139,250,0.05); }
+        .state-ai .node-box i { color: var(--violet); }
+
+        /* Connector lines */
+        .topo-line {
+            flex: 1;
+            height: 2px;
+            background: var(--border);
+            position: relative;
+            z-index: 1;
+            margin: 0 -4px;
+        }
+
+        .packet {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            left: 0;
+            opacity: 0;
+        }
+
+        @keyframes fly {
+            0% { left: 0; opacity: 1; }
+            90% { opacity: 1; }
+            100% { left: 100%; opacity: 0; }
+        }
+
+        /* Right panel */
+        .right-panel {
+            border-left: 1px solid var(--border);
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            overflow: hidden;
+        }
+
+        .inspector-pane, .log-pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .inspector-pane { border-bottom: 1px solid var(--border); }
+
+        .pane-header {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+
+        .pane-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem 1rem;
+            background: #02060f;
+            scrollbar-width: thin;
+            scrollbar-color: var(--surface3) transparent;
+        }
+
+        pre#inspector {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            line-height: 1.7;
+            color: var(--muted);
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        #syslog {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .log-entry {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            line-height: 1.5;
+            display: flex;
+            gap: 6px;
+        }
+        .log-ts { color: rgba(107,127,163,0.6); flex-shrink: 0; }
+        .log-ok { color: var(--green); }
+        .log-err { color: var(--red); }
+        .log-warn { color: var(--violet); }
+        .log-info { color: var(--muted); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .dash-body { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+            .left-panel, .right-panel { border: none; border-top: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Nav Dots -->
+<div class="nav" id="navDots">
+    <button class="nav-dot active" onclick="goTo(1)"></button>
+    <button class="nav-dot" onclick="goTo(2)"></button>
+    <button class="nav-dot" onclick="goTo(3)"></button>
+    <button class="nav-dot" onclick="goTo(4)"></button>
+    <button class="nav-dot" onclick="goTo(5)"></button>
+    <button class="nav-dot" onclick="goTo(6)"></button>
+</div>
+
+<div class="snap-wrap" id="snap">
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 1 · HERO
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-1">
+    <div class="ambient ambient-1"></div>
+    <div class="ambient ambient-2"></div>
+
+    <div style="position:relative;z-index:1;text-align:center;max-width:780px;">
+        <div class="hero-icon">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+
+        <div class="pill-row">
+            <span class="tag tag-blue"><i class="fa-solid fa-circle" style="font-size:5px"></i> Enterprise Grade</span>
+            <span class="tag tag-violet"><i class="fa-solid fa-circle" style="font-size:5px"></i> Neural Detection</span>
+            <span class="tag tag-green"><i class="fa-solid fa-circle" style="font-size:5px"></i> Real-time Analysis</span>
+        </div>
+
+        <h1 style="margin-bottom:1.25rem;">
+            Hybrid <span class="gradient-text">IDS</span><br>Architecture
+        </h1>
+
+        <p style="font-size:1rem;color:var(--muted);line-height:1.7;max-width:580px;margin:0 auto 2.5rem;">
+            Fusing deterministic <strong style="color:var(--green);font-weight:500;">Logic Rules</strong> with adaptive
+            <strong style="color:var(--violet);font-weight:500;">ADALINE Neural Networks</strong> —
+            a dual-layer approach to enterprise threat detection that catches everything from known signatures to zero-day exploits.
+        </p>
+
+        <button class="cta-btn" onclick="goTo(2)">
+            Begin Technical Review <i class="fa-solid fa-arrow-right" style="font-size:0.8rem"></i>
+        </button>
+
+        <div style="margin-top:3rem;display:flex;align-items:center;justify-content:center;gap:2rem;opacity:0.4;">
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;color:var(--text);">2</div>
+                <div style="font-size:0.68rem;color:var(--muted);">Detection Layers</div>
+            </div>
+            <div style="width:1px;height:32px;background:var(--border)"></div>
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;color:var(--text);">O(1)</div>
+                <div style="font-size:0.68rem;color:var(--muted);">Rule Engine Speed</div>
+            </div>
+            <div style="width:1px;height:32px;background:var(--border)"></div>
+            <div style="text-align:center;">
+                <div style="font-size:1.4rem;font-weight:700;color:var(--text);">MSE</div>
+                <div style="font-size:0.68rem;color:var(--muted);">Optimization Target</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 2 · PROBLEM
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-2">
+    <div class="ambient" style="width:400px;height:400px;background:rgba(248,113,113,0.04);top:-100px;right:-100px;border-radius:50%;filter:blur(100px);"></div>
+
+    <div style="width:100%;max-width:950px;position:relative;z-index:1;">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <div class="overline" style="color:var(--red);">The Problem</div>
+            <h2>Why Singular Approaches Fail</h2>
+            <p style="color:var(--muted);font-size:0.85rem;margin-top:0.75rem;max-width:500px;margin-left:auto;margin-right:auto;">Modern networks require more than a single detection paradigm to defend against evolving threats.</p>
+        </div>
+
+        <div class="compare-grid">
+            <!-- Signature -->
+            <div class="card card-accent-blue" style="padding:1.75rem;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+                    <div style="width:40px;height:40px;background:var(--blue-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(79,142,247,0.15);">
+                        <i class="fa-solid fa-fingerprint" style="color:var(--blue);font-size:0.9rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size:0.9rem;">Signature-Based</h3>
+                        <span class="tag tag-blue" style="margin-top:3px;">Traditional IDS</span>
+                    </div>
+                </div>
+                <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:1rem;">Relies on a predefined database of known threat signatures — similar to traditional antivirus software. Deterministic and fast.</p>
+                <ul class="pro-con-list">
+                    <li><i class="fa-solid fa-plus icon-plus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Zero latency, minimal CPU overhead</li>
+                    <li><i class="fa-solid fa-plus icon-plus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Zero false positives for known threats</li>
+                    <li><i class="fa-solid fa-minus icon-minus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Completely blind to zero-day attacks</li>
+                    <li><i class="fa-solid fa-minus icon-minus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Requires constant signature updates</li>
+                </ul>
+            </div>
+
+            <!-- Anomaly -->
+            <div class="card card-accent-violet" style="padding:1.75rem;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;">
+                    <div style="width:40px;height:40px;background:var(--violet-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(167,139,250,0.15);">
+                        <i class="fa-solid fa-brain" style="color:var(--violet);font-size:0.9rem;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size:0.9rem;">Anomaly-Based</h3>
+                        <span class="tag tag-violet" style="margin-top:3px;">Pure AI / ML</span>
+                    </div>
+                </div>
+                <p style="font-size:0.8rem;color:var(--muted);line-height:1.6;margin-bottom:1rem;">Establishes a baseline of normal behavior and flags statistical deviations using machine learning. Adaptive but expensive.</p>
+                <ul class="pro-con-list">
+                    <li><i class="fa-solid fa-plus icon-plus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Detects unknown, novel threat vectors</li>
+                    <li><i class="fa-solid fa-plus icon-plus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> Self-adapts to new traffic patterns</li>
+                    <li><i class="fa-solid fa-minus icon-minus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> High false positive rate initially</li>
+                    <li><i class="fa-solid fa-minus icon-minus" style="font-size:0.6rem;flex-shrink:0;margin-top:2px;"></i> High compute cost per packet</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="vs-divider" style="margin-top:2rem;">
+            <div class="vs-label">Solution: Hybrid Architecture — Best of Both Worlds</div>
+        </div>
+
+        <div style="background:linear-gradient(135deg,rgba(79,142,247,0.06),rgba(167,139,250,0.06));border:1px solid var(--border-bright);border-radius:12px;padding:1rem 1.5rem;text-align:center;">
+            <span style="font-size:0.82rem;color:var(--muted);">
+                Layer 1 handles known threats instantly at <strong style="color:var(--green)">O(1)</strong> cost —
+                Layer 2 catches everything else with <strong style="color:var(--violet)">adaptive intelligence</strong>,
+                only processing packets that survive the first filter.
+            </span>
+        </div>
+    </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 3 · LOGIC ENGINE
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-3">
+    <div class="ambient" style="width:500px;height:500px;background:rgba(52,211,153,0.04);bottom:-200px;left:-200px;border-radius:50%;filter:blur(120px);"></div>
+
+    <div class="slide-cols" style="position:relative;z-index:1;">
+        <div>
+            <div class="overline" style="color:var(--green);">Layer 1 — Deterministic</div>
+            <h2>Logic Gate Engine</h2>
+            <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin:1rem 0 1.5rem;">
+                The first layer is a strict, high-speed packet filter. It evaluates explicit <code style="font-family:'JetBrains Mono';font-size:0.8em;color:var(--green);background:rgba(52,211,153,0.1);padding:2px 6px;border-radius:4px;">IF-THEN</code> conditions and drops known malicious payloads before they ever touch the neural network — saving compute cycles for genuinely ambiguous traffic.
+            </p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <span class="tag tag-green">O(1) Execution</span>
+                <span class="tag tag-green">Hex Pattern Match</span>
+                <span class="tag tag-green">Header Analysis</span>
+                <span class="tag tag-green">Zero False Negatives</span>
+            </div>
+            <ul class="feature-list">
+                <li><div class="bullet" style="background:var(--green);"></div> Matches known SQL injection, XSS, and RCE payloads</li>
+                <li><div class="bullet" style="background:var(--green);"></div> Protocol-aware — inspects HTTP, TCP, UDP headers</li>
+                <li><div class="bullet" style="background:var(--green);"></div> Logged SEV-1 alerts for immediate SOC notification</li>
+            </ul>
+        </div>
+
+        <div>
+            <div class="code-window">
+                <div class="code-bar">
+                    <div class="code-dot" style="background:#ff5f57;"></div>
+                    <div class="code-dot" style="background:#febc2e;"></div>
+                    <div class="code-dot" style="background:#28c840;"></div>
+                    <span style="margin-left:8px;font-size:0.68rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">rules.engine.conf</span>
+                </div>
+                <div class="code-body">
+<span style="color:#4b5f7c;"># Block SQL Injection — UNION-based</span>
+<span style="color:#60a5fa;">rule</span> <span style="color:#fbbf24;">"SQLi_Union_Attack"</span> {
+    <span style="color:#a78bfa;">condition</span>:
+        payload <span style="color:#60a5fa;">contains</span> <span style="color:#34d399;">"UNION SELECT"</span>
+        <span style="color:#60a5fa;">and</span> protocol <span style="color:#fbbf24;">==</span> <span style="color:#34d399;">"HTTP"</span>
+
+    <span style="color:#a78bfa;">action</span>:
+        <span style="color:#f87171;">drop_packet()</span>
+        <span style="color:#60a5fa;">log</span>(<span style="color:#34d399;">"SEV-1: SQLi matched"</span>, severity<span style="color:#fbbf24;">=</span>CRITICAL)
+        <span style="color:#60a5fa;">alert</span>(channel<span style="color:#fbbf24;">=</span><span style="color:#34d399;">"SOC_PAGERDUTY"</span>)
+}
+
+<span style="color:#4b5f7c;"># Block Command Injection</span>
+<span style="color:#60a5fa;">rule</span> <span style="color:#fbbf24;">"RCE_Semicolon_Exec"</span> {
+    <span style="color:#a78bfa;">condition</span>:
+        payload <span style="color:#60a5fa;">matches</span> <span style="color:#34d399;">/;\s*(cat|rm|bash|sh)\s/</span>
+        <span style="color:#60a5fa;">and</span> method <span style="color:#fbbf24;">==</span> <span style="color:#34d399;">"POST"</span>
+
+    <span style="color:#a78bfa;">action</span>:
+        <span style="color:#f87171;">drop_packet()</span>
+        <span style="color:#60a5fa;">log</span>(<span style="color:#34d399;">"SEV-1: RCE attempt detected"</span>)
+}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 4 · ADALINE
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-4">
+    <div class="ambient" style="width:500px;height:500px;background:rgba(167,139,250,0.05);top:-150px;right:-150px;border-radius:50%;filter:blur(120px);"></div>
+
+    <div class="slide-cols" style="position:relative;z-index:1;">
+        <!-- Visual -->
+        <div>
+            <div class="adaline-card">
+                <div style="text-align:center;margin-bottom:1.25rem;">
+                    <div style="font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.75rem;">Net Input Function</div>
+                    <div class="formula-display">
+                        y<sub style="font-size:0.7em;color:var(--muted)">in</sub> = Σ(w<sub style="font-size:0.7em;color:var(--muted)">i</sub> · x<sub style="font-size:0.7em;color:var(--muted)">i</sub>) + b
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid var(--border);padding-top:1rem;">
+                    <div class="param-row">
+                        <span style="color:var(--blue);">x<sub style="font-size:0.75em">i</sub></span>
+                        <span style="color:var(--muted);font-size:0.75rem;">Packet features (size, rate, entropy)</span>
+                    </div>
+                    <div class="param-row">
+                        <span style="color:var(--violet);">w<sub style="font-size:0.75em">i</sub></span>
+                        <span style="color:var(--muted);font-size:0.75rem;">Learned importance weights</span>
+                    </div>
+                    <div class="param-row">
+                        <span style="color:var(--green);">b</span>
+                        <span style="color:var(--muted);font-size:0.75rem;">Bias — activation threshold shift</span>
+                    </div>
+                    <div class="param-row" style="border-bottom:none;">
+                        <span style="color:var(--amber);">y<sub style="font-size:0.75em">in</sub></span>
+                        <span style="color:var(--muted);font-size:0.75rem;">Continuous prediction output</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:1rem;padding:0.75rem;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.12);border-radius:8px;">
+                    <div style="font-size:0.68rem;color:var(--violet);font-weight:600;margin-bottom:4px;">Key Advantage</div>
+                    <p style="font-size:0.72rem;color:var(--muted);line-height:1.5;">Unlike a perceptron, error is computed from the <em style="color:var(--text)">continuous</em> net input — enabling detection of subtle traffic deviations before they cross a binary threshold.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text -->
+        <div>
+            <div class="overline" style="color:var(--violet);">Layer 2 — Adaptive</div>
+            <h2>ADALINE Neural Net</h2>
+            <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin:1rem 0 1.25rem;">
+                Traffic that passes the Logic Gate — carrying no known signature — enters the
+                <strong style="color:var(--violet);font-weight:500;">ADAptive LInear NEuron</strong>.
+            </p>
+            <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:1.5rem;">
+                ADALINE calculates error from the raw continuous output rather than a binary decision. This gives it unmatched sensitivity to <strong style="color:var(--text);font-weight:500;">subtle behavioral anomalies</strong> — the hallmark of zero-day exploits and advanced persistent threats.
+            </p>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem;">
+                <span class="tag tag-violet">Anomaly Detection</span>
+                <span class="tag tag-violet">Zero-Day Ready</span>
+                <span class="tag tag-violet">Continuous Learning</span>
+            </div>
+
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+                <div style="font-size:0.68rem;font-weight:700;color:var(--muted);margin-bottom:0.5rem;letter-spacing:0.08em;text-transform:uppercase;">Feature Vector (per packet)</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span class="tag tag-blue" style="font-family:'JetBrains Mono';font-size:0.65rem;">payload_size</span>
+                    <span class="tag tag-blue" style="font-family:'JetBrains Mono';font-size:0.65rem;">packet_rate</span>
+                    <span class="tag tag-blue" style="font-family:'JetBrains Mono';font-size:0.65rem;">entropy</span>
+                    <span class="tag tag-blue" style="font-family:'JetBrains Mono';font-size:0.65rem;">ttl_variance</span>
+                    <span class="tag tag-blue" style="font-family:'JetBrains Mono';font-size:0.65rem;">port_deviation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 5 · DELTA RULE
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-5">
+    <div class="ambient" style="width:400px;height:400px;background:rgba(251,191,36,0.04);bottom:-150px;left:-100px;border-radius:50%;filter:blur:100px;filter:blur(100px);"></div>
+
+    <div style="width:100%;max-width:900px;text-align:center;position:relative;z-index:1;">
+        <div class="overline" style="color:var(--amber);">Learning Algorithm</div>
+        <h2>Weight Optimization via Delta Rule</h2>
+        <p style="color:var(--muted);font-size:0.85rem;margin:1rem auto 2rem;max-width:580px;line-height:1.7;">
+            The Widrow-Hoff Delta Rule drives continuous improvement — the network adapts its weights each time it encounters new traffic, minimizing the Mean Squared Error (MSE) over time.
+        </p>
+
+        <div class="math-box" style="max-width:600px;margin:0 auto 2.5rem;">
+            W<sub style="font-size:0.6em;color:var(--muted)">new</sub> =
+            W<sub style="font-size:0.6em;color:var(--muted)">old</sub> +
+            <span style="color:var(--amber)">α</span>(t −
+            <span style="color:var(--violet)">y<sub style="font-size:0.6em">in</sub></span>) · x
+        </div>
+
+        <div class="delta-grid">
+            <div class="delta-card">
+                <div class="delta-label" style="color:var(--amber);">α — Learning Rate</div>
+                <div class="delta-desc">Controls the step size during gradient descent. Too large → overshoot the minimum. Too small → slow convergence. Tuned per deployment environment.</div>
+            </div>
+            <div class="delta-card">
+                <div class="delta-label" style="color:var(--red);">(t − y<sub style="font-size:0.8em">in</sub>) — Error Signal</div>
+                <div class="delta-desc">The raw difference between the target label (t) and the continuous prediction (y<sub style="font-size:0.8em">in</sub>). Computed before the activation function — what makes ADALINE superior to a perceptron for this task.</div>
+            </div>
+            <div class="delta-card">
+                <div class="delta-label" style="color:var(--blue);">x — Input Vector</div>
+                <div class="delta-desc">Scales the weight update proportionally to the features that caused the error. High-entropy packets that trigger false negatives contribute more to the correction.</div>
+            </div>
+        </div>
+
+        <div style="margin-top:2rem;padding:1rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:600px;margin-left:auto;margin-right:auto;">
+            <div style="font-size:0.72rem;color:var(--muted);">
+                After each epoch, <strong style="color:var(--text)">MSE decreases monotonically</strong> when α is chosen correctly — the network converges to a stable representation of normal traffic, making anomalies increasingly detectable.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     SLIDE 6 · SIMULATOR
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<section class="slide" id="slide-6">
+    <div class="dashboard">
+
+        <!-- Header -->
+        <div class="dash-header">
+            <div class="dash-logo">
+                <div class="dash-logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                    <div style="font-size:0.82rem;font-weight:600;">HIDS Console</div>
+                    <div style="font-size:0.62rem;color:var(--muted);font-family:'JetBrains Mono',monospace;">Hybrid Intrusion Detection System</div>
+                </div>
+            </div>
+            <div class="dash-stats">
+                <div class="dash-stat">
+                    <div class="dash-stat-dot" style="background:var(--green);"></div>
+                    Logic Block:&nbsp;<span class="dash-stat-val" id="cnt-logic">0</span>
+                </div>
+                <div class="dash-stat">
+                    <div class="dash-stat-dot" style="background:var(--violet);"></div>
+                    AI Block:&nbsp;<span class="dash-stat-val" id="cnt-ai">0</span>
+                </div>
+                <div class="dash-stat">
+                    <div class="dash-stat-dot" style="background:var(--blue);"></div>
+                    Passed:&nbsp;<span class="dash-stat-val" id="cnt-pass">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="dash-body">
+
+            <!-- LEFT: Attack Vectors -->
+            <div class="left-panel">
+                <div class="panel-section">Attack Vectors</div>
+                <button class="attack-btn" onclick="sim('sql')">
+                    <div class="attack-btn-label" style="color:var(--red);">⬥ SQL_INJECTION</div>
+                    <div class="attack-btn-desc">Known malicious signature. Expected: Layer 1 DROP.</div>
+                </button>
+                <button class="attack-btn" onclick="sim('zero')">
+                    <div class="attack-btn-label" style="color:var(--violet);">⬥ ZERO_DAY_EXPLOIT</div>
+                    <div class="attack-btn-desc">Obfuscated payload with anomalous metadata. Target: Layer 2 ADALINE.</div>
+                </button>
+                <button class="attack-btn" onclick="sim('normal')">
+                    <div class="attack-btn-label" style="color:var(--green);">⬥ NORMAL_TRAFFIC</div>
+                    <div class="attack-btn-desc">Standard HTTP GET request. Expected: all layers PASS.</div>
+                </button>
+
+                <div style="padding:1rem;margin-top:auto;border-top:1px solid var(--border);">
+                    <div style="font-size:0.65rem;color:var(--muted);line-height:1.6;">Click any attack vector to simulate a packet traversal through the hybrid IDS pipeline.</div>
+                </div>
+            </div>
+
+            <!-- CENTER: Topology -->
+            <div class="center-panel">
+                <div class="center-title">Network Topology</div>
+
+                <div class="topology" id="topology">
+
+                    <!-- Source -->
+                    <div class="topo-node" id="n-src">
+                        <div class="node-box">
+                            <i class="fa-solid fa-globe"></i>
+                            <div class="node-label">External</div>
+                            <div class="node-sublabel">Source</div>
+                        </div>
+                    </div>
+
+                    <div class="topo-line" id="line-1">
+                        <div class="packet" id="pkt-1"></div>
+                    </div>
+
+                    <!-- Logic Gate -->
+                    <div class="topo-node" id="n-logic">
+                        <div class="node-box">
+                            <div class="node-badge" id="badge-logic" style="background:rgba(248,113,113,0.15);color:var(--red);border:1px solid rgba(248,113,113,0.3);">DROP</div>
+                            <i class="fa-solid fa-filter"></i>
+                            <div class="node-label">Logic Gate</div>
+                            <div class="node-sublabel">Layer 1</div>
+                        </div>
+                    </div>
+
+                    <div class="topo-line" id="line-2">
+                        <div class="packet" id="pkt-2"></div>
+                    </div>
+
+                    <!-- ADALINE -->
+                    <div class="topo-node" id="n-ai">
+                        <div class="node-box">
+                            <div class="node-badge" id="badge-ai" style="background:rgba(167,139,250,0.15);color:var(--violet);border:1px solid rgba(167,139,250,0.3);">BLOCK</div>
+                            <i class="fa-solid fa-brain"></i>
+                            <div class="node-label">ADALINE</div>
+                            <div class="node-sublabel">Layer 2</div>
+                        </div>
+                    </div>
+
+                    <div class="topo-line" id="line-3">
+                        <div class="packet" id="pkt-3"></div>
+                    </div>
+
+                    <!-- Server -->
+                    <div class="topo-node" id="n-dest">
+                        <div class="node-box">
+                            <div class="node-badge" id="badge-dest" style="background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3);">OK</div>
+                            <i class="fa-solid fa-database"></i>
+                            <div class="node-label">Server</div>
+                            <div class="node-sublabel">Protected DB</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Status bar -->
+                <div id="status-bar" style="margin-top:auto;padding:0.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);text-align:center;">
+                    → Select an attack vector to begin simulation
+                </div>
+            </div>
+
+            <!-- RIGHT: Inspector + Logs -->
+            <div class="right-panel">
+                <div class="inspector-pane">
+                    <div class="pane-header">Packet Inspector</div>
+                    <div class="pane-body">
+                        <pre id="inspector">Awaiting packet transmission...</pre>
+                    </div>
+                </div>
+                <div class="log-pane">
+                    <div class="pane-header">System Event Log</div>
+                    <div class="pane-body">
+                        <div id="syslog">
+                            <div class="log-entry"><span class="log-ts">[BOOT]</span><span class="log-info">IDS initialized. All systems nominal.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+</div><!-- end snap-wrap -->
+
+<script>
+// ── NAVIGATION ──
+const snap = document.getElementById('snap');
+const dots = document.querySelectorAll('.nav-dot');
+
+function goTo(n) {
+    document.getElementById('slide-'+n).scrollIntoView({ behavior: 'smooth' });
+}
+
+snap.addEventListener('scroll', () => {
+    const idx = Math.round(snap.scrollTop / snap.clientHeight);
+    dots.forEach((d,i) => d.classList.toggle('active', i === idx));
+}, { passive: true });
+
+// ── PACKET DATA ──
+const packets = {
+    sql: {
+        src_ip: '203.0.113.42',
+        protocol: 'HTTP/1.1',
+        method: 'POST',
+        path: '/login',
+        payload_size: 142,
+        headers: { 'User-Agent': 'curl/8.1.0', 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: "user=admin&pass=' OR 1=1 UNION SELECT * FROM users--",
+        features: [0.82, 0.11, 0.90]
+    },
+    zero: {
+        src_ip: '10.0.0.52',
+        protocol: 'TCP',
+        method: 'UNKNOWN',
+        path: '/api/v2/sync',
+        payload_size: 8450,
+        headers: { 'User-Agent': 'syncclient/0.1', 'X-Auth': '0xDEADBEEF9921' },
+        body: '<Encrypted Binary Payload>',
+        features: [0.94, 0.87, 0.93]
+    },
+    normal: {
+        src_ip: '172.16.0.8',
+        protocol: 'HTTP/2',
+        method: 'GET',
+        path: '/assets/main.css',
+        payload_size: 45,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Win NT 10.0)', 'Accept': 'text/css' },
+        body: '',
+        features: [0.02, 0.04, 0.01]
+    }
+};
+
+// ── STATE ──
+let stats = { logic: 0, ai: 0, pass: 0 };
+let busy = false;
+
+function updateStats() {
+    document.getElementById('cnt-logic').textContent = stats.logic;
+    document.getElementById('cnt-ai').textContent = stats.ai;
+    document.getElementById('cnt-pass').textContent = stats.pass;
+}
+
+function resetNodes() {
+    ['n-src','n-logic','n-ai','n-dest'].forEach(id => {
+        const el = document.getElementById(id);
+        el.className = 'topo-node';
+    });
+    ['badge-logic','badge-ai','badge-dest'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    ['pkt-1','pkt-2','pkt-3'].forEach(id => {
+        const p = document.getElementById(id);
+        p.style.animation = 'none';
+        p.style.opacity = '0';
+    });
+}
+
+function addLog(msg, type='info') {
+    const syslog = document.getElementById('syslog');
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    const ts = new Date().toLocaleTimeString('en-US', { hour12: false });
+    div.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-${type}">${msg}</span>`;
+    syslog.appendChild(div);
+    syslog.parentElement.scrollTop = syslog.parentElement.scrollHeight;
+}
+
+function highlight(json) {
+    const s = JSON.stringify(json, null, 2);
+    return s
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, match => {
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) return `<span style="color:#8ba3cc;">${match}</span>`;
+                return `<span style="color:#34d399;">${match}</span>`;
+            }
+            if (/true|false/.test(match)) return `<span style="color:#a78bfa;">${match}</span>`;
+            if (/null/.test(match)) return `<span style="color:#4b5f7c;">${match}</span>`;
+            return `<span style="color:#60a5fa;">${match}</span>`;
+        });
+}
+
+function fly(pktId, color, duration) {
+    return new Promise(resolve => {
+        const p = document.getElementById(pktId);
+        p.style.background = color;
+        p.style.boxShadow = `0 0 12px ${color}`;
+        p.style.animation = `fly ${duration}s linear forwards`;
+        p.style.opacity = '1';
+        setTimeout(resolve, duration * 1000);
+    });
+}
+
+function setStatus(msg, color) {
+    const sb = document.getElementById('status-bar');
+    sb.style.color = color || 'var(--muted)';
+    sb.textContent = msg;
+}
+
+async function sim(type) {
+    if (busy) return;
+    busy = true;
+    resetNodes();
+
+    const pkt = { ...packets[type], timestamp: new Date().toISOString() };
+    document.getElementById('inspector').innerHTML = highlight(pkt);
+
+    setStatus('→ Packet in flight...', 'var(--muted)');
+    addLog(`Transmission from ${pkt.src_ip} — method: ${pkt.method} ${pkt.path}`, 'info');
+
+    // Phase 1: Source → Logic
+    await fly('pkt-1', '#e2e8f0', 0.55);
+
+    if (type === 'sql') {
+        // Blocked at Logic Gate
+        document.getElementById('n-logic').className = 'topo-node state-block';
+        document.getElementById('badge-logic').style.display = 'block';
+        addLog('L1 LOGIC: Signature match — UNION SELECT detected. Packet DROPPED.', 'err');
+        setStatus('✕  Blocked at Layer 1 — SQL Injection signature matched.', 'var(--red)');
+        stats.logic++;
+        updateStats();
+        busy = false;
+        return;
+    }
+
+    document.getElementById('n-logic').className = 'topo-node state-pass';
+    addLog('L1 LOGIC: No signature match. Forwarding to ADALINE.', 'ok');
+
+    // Phase 2: Logic → ADALINE
+    await fly('pkt-2', '#e2e8f0', 0.55);
+
+    if (type === 'zero') {
+        document.getElementById('n-ai').className = 'topo-node state-ai';
+        document.getElementById('badge-ai').style.display = 'block';
+        addLog(`L2 ADALINE: Anomaly score ${pkt.features[2].toFixed(2)} — MSE threshold exceeded. Payload size ${pkt.payload_size}B abnormal. Connection ISOLATED.`, 'warn');
+        setStatus('✕  Blocked at Layer 2 — Zero-day anomaly detected by ADALINE.', 'var(--violet)');
+        stats.ai++;
+        updateStats();
+        busy = false;
+        return;
+    }
+
+    document.getElementById('n-ai').className = 'topo-node state-pass';
+    addLog(`L2 ADALINE: Anomaly score ${pkt.features[2].toFixed(2)} — within normal baseline. Cleared.`, 'ok');
+
+    // Phase 3: ADALINE → Server
+    await fly('pkt-3', '#60a5fa', 0.5);
+
+    document.getElementById('n-dest').className = 'topo-node state-pass';
+    document.getElementById('badge-dest').style.display = 'block';
+    addLog('SERVER: Packet delivered. HTTP 200 OK.', 'ok');
+    setStatus('✓  Traffic passed all layers — delivered to protected server.', 'var(--green)');
+    stats.pass++;
+    updateStats();
+    busy = false;
+}
+</script>
+</body>
+</html>
